@@ -44,7 +44,11 @@ impl MockMetricSourceContract {
         assert_eq!(dims.time_bucket, 42);
         assert_eq!(dims.region, Some(symbol_short!("NG")));
 
-        MetricValue { count: 7, sum: 150 }
+        MetricValue {
+            count: 7,
+            sum: 150,
+            version: 0,
+        }
     }
 }
 
@@ -77,7 +81,14 @@ fn test_import_metric_from_source_persists_parsed_metric_value() {
 
     let imported = client.import_metric_from_source(&aggregator, &source_id, &kind, &dims);
 
-    assert_eq!(imported, MetricValue { count: 7, sum: 150 });
+    assert_eq!(
+        imported,
+        MetricValue {
+            count: 7,
+            sum: 150,
+            version: 1,
+        }
+    );
     assert_eq!(client.get_metric(&kind, &dims), imported);
 }
 
@@ -98,10 +109,7 @@ fn test_import_metric_from_source_maps_external_failure_without_mutating_state()
         client.try_import_metric_from_source(&aggregator, &source_id, &kind, &dims),
         Err(Ok(ContractError::ExternalCallFailed))
     );
-    assert_eq!(
-        client.get_metric(&kind, &dims),
-        MetricValue { count: 0, sum: 0 }
-    );
+    assert_eq!(client.get_metric(&kind, &dims), MetricValue { count: 0, sum: 0, version: 0 });
 }
 
 #[test]
